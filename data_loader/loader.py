@@ -16,11 +16,12 @@ class Loader:
     def load(self):
         try:
             data = pd.read_csv(
-                f'datasets/{self.prefix}_{self.symbol}_{self.frequency}.csv', index_col=0, parse_dates=True)
+                f'datasets/{self.prefix}_{self.symbol}_{self.frequency}.csv',
+                index_col=0, parse_dates=True)
             data['date'] = pd.to_datetime(data['date'])
             if self.start:
                 data = data[data.date > self.start]
-            return data
+            return data.sort_values(by='date', ascending=True)
 
         # FIXME add specific exceptions
         except Exception as e:
