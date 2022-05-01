@@ -9,7 +9,8 @@ from plotly.subplots import make_subplots
 
 class CandleStickPlot:
     def __init__(self, indicator_columns=None) -> None:
-        self.fig = make_subplots(specs=[[{"secondary_y": True}]])
+        self.fig = make_subplots(
+            rows=2, cols=1, shared_xaxes=True, row_heights=[0.8, 0.2])
         self.indicator_columns = indicator_columns
 
     def plot(self, data):

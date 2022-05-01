@@ -12,3 +12,5 @@ class MovingAverage:
     #     self.data[f'MA{window}'] = self.data[self.column_name].rolling(
     #         window=window).mean()
     #     return self.data
+
+# TODO add MACD
