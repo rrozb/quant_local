@@ -3,7 +3,7 @@ import datetime
 
 
 class Loader:
-    def __init__(self, symbol, frequency, start=None, end=None) -> None:
+    def __init__(self, symbol, frequency, start=None, end=None, prefix='Bitfinex',) -> None:
         self.symbol = symbol
         # Allow lower frequencies
         self.start = datetime.datetime.strptime(
@@ -11,7 +11,7 @@ class Loader:
         self.end = datetime.datetime.strptime(
             end, '%Y-%m-%d %H:%M:%S') if end else None
         self.frequency = frequency
-        self.prefix = 'Bitfinex'
+        self.prefix = prefix
 
     def load(self):
         try:
