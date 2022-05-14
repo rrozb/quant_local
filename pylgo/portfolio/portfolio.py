@@ -3,6 +3,7 @@ import datetime
 
 class Portfolio:
     def __init__(self, cash):
+        self.strating_cash = cash
         self.cash = cash
         self.active_positions = []
         self.positions_value = 0
@@ -14,6 +15,10 @@ class Portfolio:
             # TODO better way of calculating value
         for active_position in self.active_positions:
             self.positions_value = active_position.value
+
+    @ property
+    def portfolio_return(self):
+        return (self.positions_value - self.strating_cash)/self.strating_cash
 
 
 class Position:

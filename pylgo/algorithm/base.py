@@ -1,3 +1,4 @@
+from datetime import datetime
 import pandas as pd
 from ..data_loader import Loader, History
 from ..portfolio import Portfolio, Position
@@ -7,7 +8,7 @@ from abc import ABC, abstractmethod
 
 
 class AlgorithmBase(ABC):
-    def __init__(self, symbol=None, prefix=None, frequency=None, start=None, end=None, cash=10_000) -> None:
+    def __init__(self, symbol=None, prefix=None, frequency=None, start=None, end=None, reporting_path=None, cash=10_000) -> None:
         self.symbol = symbol
         # Allow lower frequencies
         self.start = start
@@ -16,6 +17,7 @@ class AlgorithmBase(ABC):
         self.prefix = prefix
         self.cash = cash
         self.portfolio = Portfolio(cash)
+        self.reporting_path = reporting_path
 
     def map_signals(self, signals, data):
         # TODO here should be market data
@@ -41,7 +43,18 @@ class AlgorithmBase(ABC):
             signals = self.create_signals(current_data)
             self.portfolio.update(self.map_signals(signals, current_data))
 
-            # self.portfolio.update(signals, index_value)
+        self.create_report()
+
+    def create_report(self):
+        file_name = f'{self.reporting_path}/{self.symbol}_{self.frequency}_{self.start}_{self.end}_{int(datetime.now().timestamp())}.txt'
+        with open(file_name, 'w+') as file:
+            file.write(f'Total cash: {self.portfolio.cash}\n')
+            file.write(
+                f'Open positions value: {self.portfolio.positions_value}\n')
+            file.write(
+                f'Cash and positions value: {self.portfolio.cash + self.portfolio.positions_value}\n')
+            file.write(
+                f'Portfolio return: {self.portfolio.portfolio_return}\n')
 
     @abstractmethod
     def create_signals(self, data):
