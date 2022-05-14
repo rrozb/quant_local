@@ -1,6 +1,6 @@
 import pandas as pd
-from data_loader import Loader, History
-from portfolio import Portfolio, Position
+from ..data_loader import Loader, History
+from ..portfolio import Portfolio, Position
 
 from abc import ABC, abstractmethod
 # TODO add multiple symbols.

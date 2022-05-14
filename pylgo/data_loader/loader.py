@@ -16,7 +16,7 @@ class Loader:
     def load(self):
         try:
             data = pd.read_csv(
-                f'data/{self.prefix}_{self.symbol}_{self.frequency}.csv',
+                f'pylgo/data/{self.prefix}_{self.symbol}_{self.frequency}.csv',
                 index_col=0, parse_dates=True)
             data['date'] = pd.to_datetime(data['date'])
             if self.start:

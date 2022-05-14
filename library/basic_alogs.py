@@ -1,5 +1,5 @@
-from algorithm import AlgorithmBase
-from alpha import Signal
+from pylgo.algorithm import AlgorithmBase
+from pylgo.alpha import Signal
 
 
 class HODL(AlgorithmBase):
