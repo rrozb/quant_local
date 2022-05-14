@@ -9,4 +9,5 @@ class History:
         # self.current_index = 1
 
     def get_snapshot(self, element_count=1) -> pd.DataFrame:
-        return self.data.head(element_count)
+        # TODO don`t use +1
+        return self.data.head(element_count+1)
