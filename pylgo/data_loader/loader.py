@@ -6,6 +6,7 @@ class Loader:
     def __init__(self, symbol, frequency, start=None, end=None, prefix='Bitfinex',) -> None:
         self.symbol = symbol
         # Allow lower frequencies
+        # TODO make more generic
         self.start = datetime.datetime.strptime(
             start, '%Y-%m-%d %H:%M:%S') if start else None
         self.end = datetime.datetime.strptime(
@@ -14,6 +15,7 @@ class Loader:
         self.prefix = prefix
 
     def load(self):
+        # TODO make more generic
         try:
             data = pd.read_csv(
                 f'pylgo/data/{self.prefix}_{self.symbol}_{self.frequency}.csv',

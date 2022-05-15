@@ -134,3 +134,5 @@ notebooks/*
 pylgo/data/*
 test.py
 reports/*
+test_algo.py
+test.py

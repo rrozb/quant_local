@@ -9,12 +9,14 @@ from abc import ABC, abstractmethod
 # TODO add confifuration file
 logger = logging.getLogger('algorithm testing')
 logger.setLevel(logging.DEBUG)
+# TODO add other with https://docs.python.org/3/howto/logging-cookbook.html
 
 
 class AlgorithmBase(ABC):
     algo_name = None
 
-    def __init__(self, symbol=None, prefix=None, frequency=None, start=None, end=None, reporting_path=None, cash=10_000) -> None:
+    def __init__(self, symbol=None, prefix=None, frequency=None,
+                 start=None, end=None, reporting_path=None, cash=10_000) -> None:
         self.symbol = symbol
         # Allow lower frequencies
         self.start = start
