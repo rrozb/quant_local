@@ -12,20 +12,9 @@ logger.setLevel(logging.DEBUG)
 # TODO add other with https://docs.python.org/3/howto/logging-cookbook.html
 
 
-class AlgorithmBase(ABC):
-    algo_name = None
-
-    def __init__(self, symbol=None, prefix=None, frequency=None,
-                 start=None, end=None, reporting_path=None, cash=10_000) -> None:
-        self.symbol = symbol
-        # Allow lower frequencies
-        self.start = start
-        self.end = end
-        self.frequency = frequency
-        self.prefix = prefix
-        self.cash = cash
-        self.portfolio = Portfolio(cash)
-        self.reporting_path = f'{reporting_path}/{self.symbol}_{self.frequency}_{self.start}_{self.end}_{int(datetime.now().timestamp())}.txt'
+class AlgorithLogging:
+    def __init__(self, symbol, frequency, start, end, reporting_path):
+        self.reporting_path = f'{reporting_path}/{symbol}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}.txt'
         self.file_handler = logging.FileHandler(self.reporting_path)
         self.file_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
@@ -34,20 +23,36 @@ class AlgorithmBase(ABC):
         logger.addHandler(self.file_handler)
         logger.warning('Starting algorithm.')
 
-    def map_signals(self, signals, data):
-        # TODO here should be market data
-        positions = []
-        if not data.empty:
-            price = data.iloc[-1]['close']
-            for signal in signals:
-                if self.symbol in [x.symbol for x in self.portfolio.active_positions]:
-                    self.portfolio.active_positions[0].current_price = price
-                if signal.signal_type == 1:
-                    # TODO make generic
-                    qnty = self.cash / price
-                    positions.append(
-                        Position(self.symbol, qnty, price))
-        return positions
+
+class AlgorithmBase(ABC, AlgorithLogging):
+    algo_name = None
+
+    def __init__(self, symbol=None, prefix=None, frequency=None,
+                 start=None, end=None, reporting_path=None, cash=10_000) -> None:
+        super().__init__(symbol, frequency, start, end, reporting_path)
+        self.symbol = symbol
+        # Allow lower frequencies
+        self.start = start
+        self.end = end
+        self.frequency = frequency
+        self.prefix = prefix
+        self.cash = cash
+        self.portfolio = Portfolio(cash)
+
+    # def map_signals(self, signals, data):
+    #     positions = []
+    #     if not data.empty:
+    #         # TODO change it to just purches price. No need to use entire dataset.
+    #         price = data.iloc[-1]['close']
+    #         for signal in signals:
+        # if self.symbol in [x.symbol for x in self.portfolio.active_positions]:
+        #     self.portfolio.active_positions[0].current_price = price
+        # if signal.signal_type == 1:
+        #     # TODO make generic
+        #     qnty = self.cash / price
+        #     positions.append(
+        #         Position(self.symbol, qnty, price))
+        # return positions
 
     def run(self):
         data = Loader(self.symbol,
@@ -59,12 +64,14 @@ class AlgorithmBase(ABC):
             current_data = history.get_all_available_data(
                 simulation.current_time)
             signals = self.create_signals(current_data)
-            new_orders = self.map_signals(signals, current_data)
-            self.portfolio.update(new_orders)
+            # TODO current data >>> use only prices not entire dataset.
+            self.portfolio.manage(signals, current_data)
+            # new_orders = self.map_signals(signals, current_data)
+            # self.portfolio.update(new_orders)
             simulation.update_current_timestamp()
         logger.info('Algorithm finished %s.', self.algo_name)
         logger.info('Total cash: %s', self.portfolio.cash)
-        logger.info('Total value: %s', self.portfolio.total_value)
+        logger.info('Total value: %s', self.portfolio.total_portfolio_value)
         logger.info('Total return: %s', self.portfolio.portfolio_return)
 
     @abstractmethod
