@@ -3,11 +3,11 @@ import pandas as pd
 
 class History:
     def __init__(self, data) -> None:
-        self.data = data
+        self.data = data.sort_index()
         self.index = self.data.index
-        # TODO change it
-        # self.current_index = 1
+        self.first_point = self.index[0]
+        self.last_point = self.index[-1]
+    # TODO consider bathces if needed due to performance.
 
-    def get_snapshot(self, element_count=1) -> pd.DataFrame:
-        # TODO don`t use +1
-        return self.data.head(element_count+1)
+    def get_all_available_data(self, current_timestamp) -> pd.DataFrame:
+        return self.data[self.index <= current_timestamp]
