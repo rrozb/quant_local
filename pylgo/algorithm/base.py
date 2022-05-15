@@ -1,13 +1,19 @@
 from datetime import datetime
+import logging
 import pandas as pd
 from ..data_loader import Loader, History
 from ..portfolio import Portfolio, Position
 from .time_simulation import TimeSimulation
 from abc import ABC, abstractmethod
 # TODO add multiple symbols.
+# TODO add confifuration file
+logger = logging.getLogger('algorithm testing')
+logger.setLevel(logging.DEBUG)
 
 
 class AlgorithmBase(ABC):
+    algo_name = None
+
     def __init__(self, symbol=None, prefix=None, frequency=None, start=None, end=None, reporting_path=None, cash=10_000) -> None:
         self.symbol = symbol
         # Allow lower frequencies
@@ -17,7 +23,14 @@ class AlgorithmBase(ABC):
         self.prefix = prefix
         self.cash = cash
         self.portfolio = Portfolio(cash)
-        self.reporting_path = reporting_path
+        self.reporting_path = f'{reporting_path}/{self.symbol}_{self.frequency}_{self.start}_{self.end}_{int(datetime.now().timestamp())}.txt'
+        self.file_handler = logging.FileHandler(self.reporting_path)
+        self.file_handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.file_handler.setFormatter(formatter)
+        logger.addHandler(self.file_handler)
+        logger.warning('Starting algorithm.')
 
     def map_signals(self, signals, data):
         # TODO here should be market data
@@ -47,20 +60,10 @@ class AlgorithmBase(ABC):
             new_orders = self.map_signals(signals, current_data)
             self.portfolio.update(new_orders)
             simulation.update_current_timestamp()
-
-        self.create_report()
-
-    def create_report(self):
-        # TODO make reporting object
-        file_name = f'{self.reporting_path}/{self.symbol}_{self.frequency}_{self.start}_{self.end}_{int(datetime.now().timestamp())}.txt'
-        with open(file_name, 'w+') as file:
-            file.write(f'Total cash: {self.portfolio.cash}\n')
-            file.write(
-                f'Open positions value: {self.portfolio.positions_value}\n')
-            file.write(
-                f'Cash and positions value: {self.portfolio.cash + self.portfolio.positions_value}\n')
-            file.write(
-                f'Portfolio return: {self.portfolio.portfolio_return}\n')
+        logger.info('Algorithm finished %s.', self.algo_name)
+        logger.info('Total cash: %s', self.portfolio.cash)
+        logger.info('Total value: %s', self.portfolio.total_value)
+        logger.info('Total return: %s', self.portfolio.portfolio_return)
 
     @abstractmethod
     def create_signals(self, data):

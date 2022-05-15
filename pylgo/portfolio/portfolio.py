@@ -20,6 +20,10 @@ class Portfolio:
     def portfolio_return(self):
         return (self.positions_value - self.strating_cash)/self.strating_cash
 
+    @ property
+    def total_value(self):
+        return self.cash + self.positions_value
+
 
 class Position:
     def __init__(self, symbol, quantity, start_price):
