@@ -7,6 +7,7 @@ class History:
         self.index = self.data.index
         self.first_point = self.index[0]
         self.last_point = self.index[-1]
+        print(data)
     # TODO consider bathces if needed due to performance.
 
     def get_all_available_data(self, current_timestamp) -> pd.DataFrame:
