@@ -8,12 +8,24 @@ class Portfolio:
         self.positions = Positions()
 
     def manage(self, signals, data):
-        net_transaction = self.positions.update(signals, data)
-        # for position in positions:
-        #     self.positions.active_positions.append(position)
-        #     self.cash -= position.value
-        # TODO add positions
-        # TODO calculate cash
+        # TODO add order filling logic
+        # acces data in better way than data.iloc[-1]['close']
+        # TODO use better logic than avialabe_qnty.
+        avialabe_qnty = self.cash / data.iloc[-1]['close']
+        if signals.signal_type == 1:
+            self.positions.active_positions = Position(
+                signals.symbol, avialabe_qnty, data.iloc[-1]['close'])
+        elif signals.signal_type == -1:
+            self.positions.active_positions = Position(
+                signals.symbol, -avialabe_qnty, data.iloc[-1]['close'])
+        elif signals.signal_type == 0:
+            self.positions.closed_positions.append(
+                self.positions.active_positions)
+            self.cash = self.cash + self.positions.active_positions.value
+            self.positions.active_positions = None
+        elif signals.signal_type == 2:
+            # update price
+            self.positions.active_positions.current_price = data.iloc[-1]['close']
 
     @ property
     def portfolio_return(self):
@@ -45,24 +57,10 @@ class Positions:
 
     @ property
     def total_value(self):
-        return self.active_positions.current_price
+        return self.active_positions.current_price * self.active_positions.quantity
         # return sum([position.current_price for position in self.active_positions])
 
     @ property
     def active_positions_tickets(self):
         return self.active_positions.symbol
         # return [position.symbol for position in self.active_positions]
-
-    def update(self, signals, data):
-        # TODO more generic rather than just close.
-        # TODO access value directly.
-        if self.active_positions is not None:
-            self.active_positions.current_price = float(data.iloc[-1]['close'])
-
-        if signals.signal_type == 1:
-            if self.active_positions is None:
-                self.active_positions = Position(
-                    signals.symbol, signals.quantity, float(data.iloc[-1]['close']))
-
-    def update_prices(self):
-        pass

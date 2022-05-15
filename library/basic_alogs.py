@@ -7,6 +7,8 @@ class HODL(AlgorithmBase):
     algo_name = 'HODL'
 
     def create_signals(self, data):
-        if len(self.portfolio.active_positions) == 0:
-            return [Signal(1)]
-        return [Signal(0)]
+        # TODO refactor
+        if not data.empty:
+            if self.portfolio.positions.active_positions is None:
+                return Signal(1, self.symbol)
+            return Signal(0, self.symbol)

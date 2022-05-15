@@ -39,21 +39,6 @@ class AlgorithmBase(ABC, AlgorithLogging):
         self.cash = cash
         self.portfolio = Portfolio(cash)
 
-    # def map_signals(self, signals, data):
-    #     positions = []
-    #     if not data.empty:
-    #         # TODO change it to just purches price. No need to use entire dataset.
-    #         price = data.iloc[-1]['close']
-    #         for signal in signals:
-        # if self.symbol in [x.symbol for x in self.portfolio.active_positions]:
-        #     self.portfolio.active_positions[0].current_price = price
-        # if signal.signal_type == 1:
-        #     # TODO make generic
-        #     qnty = self.cash / price
-        #     positions.append(
-        #         Position(self.symbol, qnty, price))
-        # return positions
-
     def run(self):
         data = Loader(self.symbol,
                       self.frequency, self.start, self.end, self.prefix).load()
@@ -65,9 +50,8 @@ class AlgorithmBase(ABC, AlgorithLogging):
                 simulation.current_time)
             signals = self.create_signals(current_data)
             # TODO current data >>> use only prices not entire dataset.
-            self.portfolio.manage(signals, current_data)
-            # new_orders = self.map_signals(signals, current_data)
-            # self.portfolio.update(new_orders)
+            if signals is not None:
+                self.portfolio.manage(signals, current_data)
             simulation.update_current_timestamp()
         logger.info('Algorithm finished %s.', self.algo_name)
         logger.info('Total cash: %s', self.portfolio.cash)
