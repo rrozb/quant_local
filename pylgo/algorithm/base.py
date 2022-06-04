@@ -9,6 +9,10 @@ from abc import ABC, abstractmethod
 # TODO add confifuration file
 logger = logging.getLogger('algorithm testing')
 logger.setLevel(logging.DEBUG)
+logger_portfolio = logging.getLogger('portfolio testing')
+logger_portfolio.setLevel(logging.DEBUG)
+logger_positions = logging.getLogger('postitins testing')
+logger_positions.setLevel(logging.DEBUG)
 # TODO add other with https://docs.python.org/3/howto/logging-cookbook.html
 
 
@@ -22,6 +26,8 @@ class AlgorithLogging:
         self.file_handler.setFormatter(formatter)
         logger.addHandler(self.file_handler)
         logger.warning('Starting algorithm.')
+        logger_portfolio.addHandler(self.file_handler)
+        logger_positions.addHandler(self.file_handler)
 
 
 class AlgorithmBase(ABC, AlgorithLogging):
