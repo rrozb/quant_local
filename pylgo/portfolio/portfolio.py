@@ -8,34 +8,44 @@ class Portfolio:
         self.cash = cash
         self.positions = Positions()
         self.logger = logging.getLogger('portfolio testing')
+        # TODO add metadata - like old positions, cash, fees etc.
 
     def manage(self, signals, data):
         # TODO add order filling logic
         # acces data in better way than data.iloc[-1]['close']
         # TODO use better logic than avialabe_qnty.
-        avialabe_qnty = self.cash / data.iloc[-1]['close']
+        current_price = data.iloc[-1]['close']
+        avialabe_qnty = round(self.cash / current_price, 2)
         self.logger.info('Available quantity: %s', avialabe_qnty)
+        # TODO refactor
+        if self.positions.active_positions is not None:
+            self.update_position(
+                self.positions.active_positions, current_price)
         if signals.signal_type == 1:
             self.open_position(Position(
-                signals.symbol, avialabe_qnty, data.iloc[-1]['close']))
-        # elif signals.signal_type == -1:
-        #     self.positions.active_positions = Position(
-        #         signals.symbol, -avialabe_qnty, data.iloc[-1]['close'])
+                signals.symbol, avialabe_qnty, current_price, data.iloc[-1]['date']))
         elif signals.signal_type == 0:
-            self.positions.closed_positions.append(
-                self.positions.active_positions)
-            self.cash = self.cash + self.positions.active_positions.value
-            self.positions.active_positions = None
-        elif signals.signal_type == 2:
-            # update price
-            self.positions.active_positions.current_price = data.iloc[-1]['close']
+            # FIXME SELECT SPECIFIC POSITION
+            self.close_position(self.positions.active_positions)
         self.logger.debug('Cash %s', self.cash)
 
     def open_position(self, position):
         # TODO add short position logic
         self.logger.info('Open position: %s', position)
+        # TODO add position instead of just reset
         self.positions.active_positions = position
         self.cash = self.cash - position.value
+
+    def close_position(self, position):
+        self.logger.info('Close position: %s', position)
+        self.positions.closed_positions.append(position)
+        # TODO remove position instead of just reset
+        self.positions.active_positions = None
+        self.cash = self.cash + position.value
+
+    def update_position(self, position, price, qnty=None):
+        # FIXME correct position access
+        self.positions.active_positions.current_price = price
 
     @ property
     def portfolio_return(self):
@@ -47,12 +57,12 @@ class Portfolio:
 
 
 class Position:
-    def __init__(self, symbol, quantity, start_price):
+    def __init__(self, symbol, quantity, start_price, time):
         self.symbol = symbol
         self.quantity = quantity
         self.start_price = start_price
         self.current_price = start_price
-        self.time = datetime.datetime.now()
+        self.time = time
         self.filled = False
 
     def __str__(self) -> str:
