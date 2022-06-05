@@ -1,7 +1,7 @@
 import imp
 import pandas as pd
 import datetime
-from .data_model import History
+from .data_model import History, HistoryCollection
 
 
 class Loader:
@@ -20,7 +20,7 @@ class Loader:
         # TODO make more generic
         try:
             # TODO replace with class?
-            data_colection = {}
+            history_collection = HistoryCollection()
             for symbol in self.symbols:
                 data = pd.read_csv(
                     f'pylgo/data/{self.prefix}_{symbol}_{self.frequency}.csv',
@@ -28,9 +28,9 @@ class Loader:
                 data['date'] = pd.to_datetime(data['date'])
                 if self.start:
                     data = data[data.date > self.start]
-                data_colection[symbol] = History(data.sort_values(
+                history_collection.collection[symbol] = History(data.sort_values(
                     by='date', ascending=True))
-            return data_colection
+            return history_collection
         # FIXME add specific exceptions
         except Exception as e:
             raise Exception(e)

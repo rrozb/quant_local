@@ -50,29 +50,17 @@ class AlgorithmBase(ABC, AlgorithLogging):
         # TODO add validation for symbols
         return Loader(self.symbols, self.frequency, self.start, self.end, self.prefix).load()
 
-    def __get_current_data(self, data_collection, current_timestamp):
-        data_collection_snapshot = {}
-        for symbol, all_data in data_collection.items():
-            data_collection_snapshot[symbol] = all_data.get_all_available_data(
-                current_timestamp)
-        return data_collection_snapshot
-
     def run(self):
         data = self.__load_data()
-        # TODO refactor after adding model
-        first_elem = next(iter(data))
-        last_point = data[first_elem].last_point
-        ###
+
         simulation = TimeSimulation(
-            self.frequency, self.start, self.end, last_point)
+            self.frequency, self.start, self.end, data.last_point)
         while not simulation.stop():
-            # FIXME multiple
-            current_data = self.__get_current_data(data,
-                                                   simulation.current_time)
-            signals = self.create_signals(current_data)
+            current_data = data.get_snapshot(simulation.current_time)
+            # signals = self.create_signals(current_data)
             # TODO current data >>> use only prices not entire dataset.
-            if signals is not None:
-                self.portfolio.manage(signals, current_data)
+            # if signals is not None:
+            #     self.portfolio.manage(signals, current_data)
             simulation.update_current_timestamp()
         logger.info('Algorithm finished %s.', self.algo_name)
         logger.info('Total cash: %s', self.portfolio.cash)
