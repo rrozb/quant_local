@@ -57,10 +57,8 @@ class AlgorithmBase(ABC, AlgorithLogging):
             self.frequency, self.start, self.end, data.last_point)
         while not simulation.stop():
             current_data = data.get_snapshot(simulation.current_time)
-            # signals = self.create_signals(current_data)
-            # TODO current data >>> use only prices not entire dataset.
-            # if signals is not None:
-            #     self.portfolio.manage(signals, current_data)
+            signals = self.create_signals(current_data)
+            # self.portfolio.manage(signals, current_data)
             simulation.update_current_timestamp()
         logger.info('Algorithm finished %s.', self.algo_name)
         logger.info('Total cash: %s', self.portfolio.cash)

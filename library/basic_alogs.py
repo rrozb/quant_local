@@ -6,16 +6,13 @@ class HODL(AlgorithmBase):
     # TODO here should data for indicators/models
     algo_name = 'HODL'
 
-    def create_signals(self, data):
-        # TODO refactor
-        # TODO fix errors
-        # TODO refactor after adding model
-        first_elem = next(iter(data))
-        data_one = data[first_elem]
-        pass
-        ###
-        # if not data_one.empty:
-        #     # for
-        #     if self.portfolio.positions.active_positions is None:
-        #         return Signal(1, self.symbol)
-        #     return Signal(0, self.symbol)
+    def create_signals(self, current_data):
+        signals = []
+        for symbol, symbol_data in current_data.items():
+            # TODO move empty check to base - create signals should't be called if no data.
+            if not symbol_data.empty:
+                if self.portfolio.positions.active_positions is None:
+                    signals.append(Signal(1, symbol))
+                else:
+                    signals.append(Signal(0, symbol))
+        return signals
