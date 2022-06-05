@@ -1,8 +1,7 @@
 from datetime import datetime
 import logging
-import pandas as pd
-from ..data_loader import Loader, History
-from ..portfolio import Portfolio, Position
+from ..data_loader import Loader
+from ..portfolio import Portfolio
 from .time_simulation import TimeSimulation
 from abc import ABC, abstractmethod
 # TODO add multiple symbols.
@@ -58,7 +57,7 @@ class AlgorithmBase(ABC, AlgorithLogging):
         while not simulation.stop():
             current_data = data.get_snapshot(simulation.current_time)
             signals = self.create_signals(current_data)
-            # self.portfolio.manage(signals, current_data)
+            self.portfolio.manage(signals, current_data)
             simulation.update_current_timestamp()
         logger.info('Algorithm finished %s.', self.algo_name)
         logger.info('Total cash: %s', self.portfolio.cash)
