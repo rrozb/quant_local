@@ -17,8 +17,8 @@ logger_positions.setLevel(logging.DEBUG)
 
 
 class AlgorithLogging:
-    def __init__(self, symbol, frequency, start, end, reporting_path):
-        self.reporting_path = f'{reporting_path}/{symbol}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}.txt'
+    def __init__(self, algo_name, symbols, frequency, start, end, reporting_path):
+        self.reporting_path = f'{reporting_path}/{algo_name}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}.txt'
         self.file_handler = logging.FileHandler(self.reporting_path)
         self.file_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
@@ -26,18 +26,19 @@ class AlgorithLogging:
         self.file_handler.setFormatter(formatter)
         logger.addHandler(self.file_handler)
         logger.warning('Starting algorithm.')
+        logger.warning('Available symbols are: %s', ', '.join(symbols))
         logger_portfolio.addHandler(self.file_handler)
         logger_positions.addHandler(self.file_handler)
 
 
 class AlgorithmBase(ABC, AlgorithLogging):
     algo_name = None
+    # TODO make no default values like frequenct start etc.
 
-    def __init__(self, symbol=None, prefix=None, frequency=None,
+    def __init__(self, symbols, prefix=None, frequency=None,
                  start=None, end=None, reporting_path=None, cash=10_000) -> None:
-        super().__init__(symbol, frequency, start, end, reporting_path)
-        self.symbol = symbol
-        # Allow lower frequencies
+        super().__init__(self.algo_name, symbols, frequency, start, end, reporting_path)
+        self.symbols = symbols
         self.start = start
         self.end = end
         self.frequency = frequency
@@ -45,15 +46,29 @@ class AlgorithmBase(ABC, AlgorithLogging):
         self.cash = cash
         self.portfolio = Portfolio(cash)
 
+    def __load_data(self):
+        # TODO add validation for symbols
+        return Loader(self.symbols, self.frequency, self.start, self.end, self.prefix).load()
+
+    def __get_current_data(self, data_collection, current_timestamp):
+        data_collection_snapshot = {}
+        for symbol, all_data in data_collection.items():
+            data_collection_snapshot[symbol] = all_data.get_all_available_data(
+                current_timestamp)
+        return data_collection_snapshot
+
     def run(self):
-        data = Loader(self.symbol,
-                      self.frequency, self.start, self.end, self.prefix).load()
-        history = History(data)
+        data = self.__load_data()
+        # TODO refactor after adding model
+        first_elem = next(iter(data))
+        last_point = data[first_elem].last_point
+        ###
         simulation = TimeSimulation(
-            self.frequency, self.start, self.end, history.last_point)
+            self.frequency, self.start, self.end, last_point)
         while not simulation.stop():
-            current_data = history.get_all_available_data(
-                simulation.current_time)
+            # FIXME multiple
+            current_data = self.__get_current_data(data,
+                                                   simulation.current_time)
             signals = self.create_signals(current_data)
             # TODO current data >>> use only prices not entire dataset.
             if signals is not None:
