@@ -11,7 +11,7 @@ class HODL(AlgorithmBase):
         for symbol, symbol_data in current_data.items():
             # TODO move empty check to base - create signals should't be called if no data.
             if not symbol_data.empty:
-                if self.portfolio.positions.active_positions is None:
+                if len(self.portfolio.positions.active_positions) == 0:
                     signals.append(Signal(1, symbol))
                 else:
                     signals.append(Signal(0, symbol))
