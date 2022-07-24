@@ -1,15 +1,15 @@
-import imp
 import pandas as pd
 import datetime
 from .data_model import History, HistoryCollection
 
 
 class Loader:
-    # TODO add symbol validation
+    '''
+    Loader for getting data from local storage.
+    '''
+
     def __init__(self, symbols, frequency, start=None, end=None, prefix='Bitfinex',) -> None:
         self.symbols = symbols
-        # Allow lower frequencies
-        # TODO make more generic
         self.start = datetime.datetime.strptime(
             start, '%Y-%m-%d %H:%M:%S') if start else None
         self.end = datetime.datetime.strptime(
@@ -18,9 +18,10 @@ class Loader:
         self.prefix = prefix
 
     def load(self):
-        # TODO make more generic
+        '''
+        Load dataset.
+        '''
         try:
-            # TODO replace with class?
             history_collection = HistoryCollection()
             for symbol in self.symbols:
                 data = pd.read_csv(

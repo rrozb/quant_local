@@ -1,8 +1,11 @@
 from datetime import datetime
-import enum
 
 
 class TimeSimulation:
+    '''
+    Time loop simulator.
+    '''
+
     def __init__(self, resolution, start, end, last_point) -> None:
         self.resolution = Resolution(resolution)
         self.start = int(datetime.strptime(
@@ -14,10 +17,16 @@ class TimeSimulation:
         self.last_point = last_point
 
     def update_current_timestamp(self):
+        '''
+        Add timestep to current  algo`s time.
+        '''
         self.current_time += self.resolution.step
         return self.current_time
 
     def stop(self) -> bool:
+        '''
+        Check if algo reached last point.
+        '''
         if self.current_time >= self.last_point:
             self.stop_reason = 'last_point'
             return True
@@ -29,10 +38,12 @@ class TimeSimulation:
 
 
 class Resolution:
+    '''
+    Available resolutions.
+    '''
     day = 24*60*60*1000
     hour = 60*60*1000
     minute = 60*1000
-    # TODO add more options if needed
 
     def __init__(self, resolution):
         if resolution == 'day':

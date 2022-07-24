@@ -4,7 +4,7 @@ from pylgo.alpha import Signal, SignalType
 
 class BuyLiquidateAlgo(AlgorithmBase):
     '''
-    Test algo to just buy and then liquidate in next step.
+    Test algo to just buy and then liquidate in the next step.
     '''
     algo_name = 'Buy Liquidate'
 
@@ -19,7 +19,7 @@ class BuyLiquidateAlgo(AlgorithmBase):
 
 class SMAAlgo(AlgorithmBase):
     '''
-    SMA BUY only algorithm.
+    SMA Long/Short algorithm.
     '''
     algo_name = 'SMA'
     window_1 = 30
