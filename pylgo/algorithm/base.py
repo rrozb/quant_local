@@ -1,21 +1,23 @@
 from datetime import datetime
+from abc import ABC, abstractmethod
 import logging
 from ..data_loader import Loader
 from ..portfolio import Portfolio
 from .time_simulation import TimeSimulation
-from abc import ABC, abstractmethod
-# TODO add multiple symbols.
-# TODO add confifuration file
+
 logger = logging.getLogger('algorithm testing')
 logger.setLevel(logging.DEBUG)
 logger_portfolio = logging.getLogger('portfolio testing')
 logger_portfolio.setLevel(logging.DEBUG)
 logger_positions = logging.getLogger('postitins testing')
 logger_positions.setLevel(logging.DEBUG)
-# TODO add other with https://docs.python.org/3/howto/logging-cookbook.html
 
 
-class AlgorithLogging:
+class AlgorithmLogging:
+    '''
+    Logging handler.
+    '''
+
     def __init__(self, algo_name, symbols, frequency, start, end, reporting_path):
         self.reporting_path = f'{reporting_path}/{algo_name}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}.txt'
         self.file_handler = logging.FileHandler(self.reporting_path)
@@ -30,9 +32,12 @@ class AlgorithLogging:
         logger_positions.addHandler(self.file_handler)
 
 
-class AlgorithmBase(ABC, AlgorithLogging):
+class AlgorithmBase(ABC, AlgorithmLogging):
+    '''
+    Base algorithm.
+    '''
+
     algo_name = None
-    # TODO make no default values like frequenct start etc.
 
     def __init__(self, symbols, prefix=None, frequency=None,
                  start=None, end=None, reporting_path=None, cash=10_000) -> None:
@@ -46,24 +51,34 @@ class AlgorithmBase(ABC, AlgorithLogging):
         self.portfolio = Portfolio(cash)
 
     def __load_data(self):
-        # TODO add validation for symbols
+        '''
+        Load data from specified source.
+        '''
         return Loader(self.symbols, self.frequency, self.start, self.end, self.prefix).load()
 
     def run(self):
+        '''
+        Run loop to iterate through history and simulate trades.
+        '''
         data = self.__load_data()
 
         simulation = TimeSimulation(
             self.frequency, self.start, self.end, data.last_point)
         while not simulation.stop():
             current_data = data.get_snapshot(simulation.current_time)
-            signals = self.create_signals(current_data)
-            self.portfolio.manage(signals, current_data)
+            self.portfolio.manage(
+                list(self.create_signals(current_data)), current_data)
             simulation.update_current_timestamp()
-        logger.info('Algorithm finished %s.', self.algo_name)
-        logger.info('Total cash: %s', self.portfolio.cash)
-        logger.info('Total value: %s', self.portfolio.total_portfolio_value)
-        logger.info('Total return: %s', self.portfolio.portfolio_return)
 
     @abstractmethod
-    def create_signals(self, current_data):
-        pass
+    def create_signals(self, current_data) -> None:
+        '''
+        Create signals that will be used to create trade orders.
+        '''
+
+    def __del__(self):
+        logger.info('Algorithm finished %s.', self.algo_name)
+        logger.info('Total cash: %s', self.portfolio.cash)
+        logger.info('Total value: %s',
+                    self.portfolio.total_portfolio_value)
+        logger.info('Total return: %s', self.portfolio.portfolio_return)

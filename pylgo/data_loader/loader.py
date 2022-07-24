@@ -5,6 +5,7 @@ from .data_model import History, HistoryCollection
 
 
 class Loader:
+    # TODO add symbol validation
     def __init__(self, symbols, frequency, start=None, end=None, prefix='Bitfinex',) -> None:
         self.symbols = symbols
         # Allow lower frequencies

@@ -18,21 +18,16 @@ class Portfolio:
         self.update_positions_data(data_collection)
         number_buy_sell = sum((1 for signal in signals if signal.signal_type !=
                               0 or signal.signal_type != 2))
-        # TODO add position sizing model
         target_pct = 1/number_buy_sell if number_buy_sell > 0 else 0
         position_cash = self.cash * target_pct
-        # TODO add execution logic layer for scehduling signals
-        signals.sort(key=lambda x: x.signal_type)
         for signal in signals:
             current_price = data_collection[signal.symbol].iloc[-1]['close']
             current_date = data_collection[signal.symbol].iloc[-1]['date']
-            # TODO add correct rounding and making sure it is less than cash
             avialabe_qnty = (position_cash / current_price)
             if signal.signal_type == 0:
                 position = self.positions.get_position(signal.symbol)
                 if position is not None:
                     self.close_position(position)
-            # TODO refactor after adding enums
             elif signal.signal_type > 0:
                 self.open_position(Position(
                     signal.symbol, avialabe_qnty, current_price, signal.signal_type, current_date))
