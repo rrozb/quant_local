@@ -4,7 +4,6 @@ import enum
 
 class TimeSimulation:
     def __init__(self, resolution, start, end, last_point) -> None:
-        # TODO refactor with more options.
         self.resolution = Resolution(resolution)
         self.start = int(datetime.strptime(
             start, "%Y-%m-%d %H:%M:%S").timestamp()*1000)
@@ -33,6 +32,7 @@ class Resolution:
     day = 24*60*60*1000
     hour = 60*60*1000
     minute = 60*1000
+    # TODO add more options if needed
 
     def __init__(self, resolution):
         if resolution == 'day':

@@ -25,6 +25,3 @@ class HistoryCollection:
     def get_snapshot(self, current_timestamp):
         return {symbol: history.get_all_available_data(current_timestamp)
                 for symbol, history in self.collection.items()}
-
-    # def get_all_available_data(self, current_timestamp) -> pd.DataFrame:
-    #     return self.data[self.index <= current_timestamp]
