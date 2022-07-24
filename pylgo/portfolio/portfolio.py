@@ -1,5 +1,4 @@
 from typing import List
-import datetime
 import logging
 import pandas as pd
 from ..alpha import Signal, SignalType
@@ -46,7 +45,7 @@ class Portfolio:
         '''
         self.logger.info('Open position: %s', position)
         # buy
-        if position.signal.signal_type is SignalType.SELL:
+        if position.signal.signal_type is SignalType.BUY:
             self.cash = self.cash - position.quantity*position.start_price
         # Margin short
         else:

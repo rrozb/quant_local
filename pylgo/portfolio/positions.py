@@ -60,7 +60,8 @@ class Positions:
         '''
         if position.signal.symbol not in self.active_positions_tickets:
             self.active_positions.append(position)
-        raise Exception('Already exists.')
+        else:
+            raise Exception('Already exists.')
 
     @ property
     def total_value(self):
