@@ -32,8 +32,9 @@ class Signal:
         return ''
 
     @property
-    def signal_name(self):
+    def name(self):
         '''
         Get signals name
         '''
         return self.signal_type.name
+    
