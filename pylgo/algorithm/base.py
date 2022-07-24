@@ -58,7 +58,7 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         '''
         return Loader(self.symbols, self.frequency, self.start, self.end, self.prefix).load()
 
-    def __has_data(self, data: Dict[pd.DataFrame]):
+    def __is_empty(self, data: Dict[str, pd.DataFrame]):
         '''
         Check if collection is empty.
         '''
@@ -74,13 +74,13 @@ class AlgorithmBase(ABC, AlgorithmLogging):
             self.frequency, self.start, self.end, data.last_point)
         while not simulation.stop():
             current_data = data.get_snapshot(simulation.current_time)
-            if self.__has_data(current_data):
+            if not self.__is_empty(current_data):
                 self.portfolio.manage(
                     list(self.create_signals(current_data)), current_data)
             simulation.update_current_timestamp()
 
     @abstractmethod
-    def create_signals(self, current_data: Dict[pd.DataFrame]) -> None:
+    def create_signals(self, current_data: Dict[str, pd.DataFrame]) -> None:
         '''
         Create signals that will be used to create trade orders.
         '''
