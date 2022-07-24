@@ -1,6 +1,8 @@
 from datetime import datetime
 from abc import ABC, abstractmethod
 import logging
+from typing import Dict
+import pandas as pd
 from ..data_loader import Loader
 from ..portfolio import Portfolio
 from .time_simulation import TimeSimulation
@@ -56,6 +58,12 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         '''
         return Loader(self.symbols, self.frequency, self.start, self.end, self.prefix).load()
 
+    def __has_data(self, data: Dict[pd.DataFrame]):
+        '''
+        Check if collection is empty.
+        '''
+        return all(item.empty for item in data.values())
+
     def run(self):
         '''
         Run loop to iterate through history and simulate trades.
@@ -66,12 +74,13 @@ class AlgorithmBase(ABC, AlgorithmLogging):
             self.frequency, self.start, self.end, data.last_point)
         while not simulation.stop():
             current_data = data.get_snapshot(simulation.current_time)
-            self.portfolio.manage(
-                list(self.create_signals(current_data)), current_data)
+            if self.__has_data(current_data):
+                self.portfolio.manage(
+                    list(self.create_signals(current_data)), current_data)
             simulation.update_current_timestamp()
 
     @abstractmethod
-    def create_signals(self, current_data) -> None:
+    def create_signals(self, current_data: Dict[pd.DataFrame]) -> None:
         '''
         Create signals that will be used to create trade orders.
         '''
