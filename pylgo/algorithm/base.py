@@ -65,5 +65,5 @@ class AlgorithmBase(ABC, AlgorithLogging):
         logger.info('Total return: %s', self.portfolio.portfolio_return)
 
     @abstractmethod
-    def create_signals(self, data):
+    def create_signals(self, current_data):
         pass

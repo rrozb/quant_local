@@ -127,3 +127,9 @@ class Positions:
     @ property
     def active_positions_tickets(self):
         return [position.symbol for position in self.active_positions]
+
+    def get_symbol_position(self, symbol):
+        # TODO allow multiple positions for same symbol
+        if symbol not in self.active_positions_tickets:
+            return None
+        return [position for position in self.active_positions if position.symbol == symbol][0]
