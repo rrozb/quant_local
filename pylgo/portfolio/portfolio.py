@@ -8,6 +8,10 @@ class Portfolio:
         self.cash = cash
         self.positions = Positions()
         self.logger = logging.getLogger('portfolio testing')
+        self.initial_margin_requirement = 0.1
+        self.blocked_cash = 0
+        # TODO add margin calls
+        # TODO add stop losses, trailing etc.
         # TODO add metadata - like old positions, cash, fees etc.
 
     def manage(self, signals, data_collection):
@@ -28,25 +32,35 @@ class Portfolio:
                 position = self.positions.get_position(signal.symbol)
                 if position is not None:
                     self.close_position(position)
-            elif signal.signal_type == 1:
+            # TODO refactor after adding enums
+            elif signal.signal_type > 0:
                 self.open_position(Position(
-                    signal.symbol, avialabe_qnty, current_price, current_date))
+                    signal.symbol, avialabe_qnty, current_price, signal.signal_type, current_date))
 
     def open_position(self, position):
-        # TODO add short position logic
         self.logger.info('Open position: %s', position)
+        # buy
+        if position.position_type == 1:
+            self.cash = self.cash - position.value
+        # Margin short
+        else:
+            # TODO refactor
+            margin_required = (
+                position.quantity*position.start_price)*self.initial_margin_requirement
+            self.blocked_cash += margin_required
+            self.cash = self.cash - margin_required
+            position.margin = margin_required
         self.positions.add_position(position)
-        self.cash = self.cash - position.value
 
     def close_position(self, position):
         self.logger.info('Close position: %s', position)
         self.positions.closed_positions.append(position)
         self.positions.remove_position(position)
-        self.cash = self.cash + position.value
-
-    # def update_position(self, position, price, qnty=None):
-    #     # FIXME correct position access
-    #     self.positions.active_positions.current_price = price
+        if position.position_type == 1:
+            self.cash = self.cash + position.value
+        elif position.position_type == 2:
+            self.blocked_cash -= position.margin
+            self.cash += position.margin + position.value
 
     def update_positions_data(self, current_data):
         for position in self.positions.active_positions:
@@ -54,28 +68,35 @@ class Portfolio:
             position.time = current_data[position.symbol].iloc[-1]['date']
 
     @ property
-    def portfolio_return(self):
-        return (self.positions.total_value - self.strating_cash)/self.strating_cash
+    def total_portfolio_value(self):
+        return self.cash + self.positions.total_value + self.blocked_cash
 
     @ property
-    def total_portfolio_value(self):
-        return self.cash + self.positions.total_value
+    def portfolio_return(self):
+        return (self.total_portfolio_value - self.strating_cash)/self.strating_cash
 
 
 class Position:
-    def __init__(self, symbol, quantity, start_price, time):
+    def __init__(self, symbol, quantity, start_price, position_type, time):
         self.symbol = symbol
         self.quantity = quantity
         self.start_price = start_price
         self.current_price = start_price
         self.time = time
         self.filled = False  # TODO finish it
+        # Add enums BUY SELL
+        self.position_type = position_type
+        self.margin = 0
 
     def __str__(self) -> str:
-        return f'{self.time} {self.symbol}. Quantity {self.quantity} for a price {self.current_price}'
+        sign = '-' if self.position_type == 2 else ''
+        return f'{self.time} {self.symbol}. Quantity {sign}{self.quantity} for a price {self.current_price}'
 
     @property
     def value(self):
+        # TODO rename to current_value
+        if self.position_type == 2:
+            return (self.start_price * self.quantity) - (self.quantity * self.current_price)
         return self.quantity * self.current_price
 
 
@@ -101,7 +122,7 @@ class Positions:
 
     @ property
     def total_value(self):
-        return sum(position.current_price * position.quantity for position in self.active_positions)
+        return sum(position.value for position in self.active_positions)
 
     @ property
     def active_positions_tickets(self):
