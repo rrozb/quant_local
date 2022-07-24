@@ -62,7 +62,6 @@ class Portfolio:
         Close existing position.
         '''
         self.logger.info('Close position: %s', position)
-        self.positions.closed_positions.append(position)
         self.positions.remove_position(position)
         if position.signal.signal_type is SignalType.BUY:
             self.cash = self.cash + position.current_value

@@ -31,34 +31,54 @@ class Position:
 
 
 class Positions:
+    '''
+    Colelction of positions.
+    '''
     active_positions = []
     closed_positions = []
     logger = logging.getLogger('portfolio testing')
 
     def get_position(self, symbol):
-        # TODO add cases when there are multiple postions for same symbol.
+        '''
+        Get active positin by symbol.
+        '''
         for position in self.active_positions:
             if position.signal.symbol == symbol:
                 return position
         return None
 
     def remove_position(self, position: Position):
+        '''
+        Remove position from active positions.
+        '''
+        self.closed_positions.append(position)
         self.active_positions.remove(position)
 
     def add_position(self, position: Position):
-        # TODO add duplicate check
-        self.active_positions.append(position)
+        '''
+        Add position to active positions.
+        '''
+        if position.signal.symbol not in self.active_positions_tickets:
+            self.active_positions.append(position)
+        raise Exception('Already exists.')
 
     @ property
     def total_value(self):
+        '''Total value of positions.'''
         return sum(position.current_value for position in self.active_positions)
 
     @ property
     def active_positions_tickets(self):
+        '''
+        Tickets that have active position.
+        '''
         return [position.signal.symbol for position in self.active_positions]
 
     def get_symbol_position(self, symbol) -> Position:
-        # TODO allow multiple positions for same symbol
+        '''
+        Get position by symbol.
+        '''
         if symbol not in self.active_positions_tickets:
             return None
-        return [position for position in self.active_positions if position.signal.symbol == symbol][0]
+        return [position for position in self.active_positions
+                if position.signal.symbol == symbol][0]
