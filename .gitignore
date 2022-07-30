@@ -132,6 +132,3 @@ dmypy.json
 datasets/*
 notebooks/*
 pylgo/data/*
-test.py
-reports/*
-test.py
