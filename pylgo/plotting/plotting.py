@@ -1,10 +1,6 @@
-from unicodedata import name
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-# FIXME add more generic plots
-
-# TODO refactor + docs
-# FIXME pass data in init
+# TODO refactor
 
 
 class CandleStickPlot:
