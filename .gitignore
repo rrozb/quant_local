@@ -130,6 +130,6 @@ dmypy.json
 
 .vscode/
 datasets/*
-notebooks/*
-pylgo/data/*
+# notebooks/*
+# pylgo/data/*
 reports/*
