@@ -28,8 +28,10 @@ class Portfolio:
         target_pct = 1/number_buy_sell if number_buy_sell > 0 else 0
         position_cash = self.cash * target_pct
         for signal in signals:
-            current_price = data_collection[signal.symbol].iloc[-1]['close']
-            current_date = data_collection[signal.symbol].iloc[-1]['date']
+            current_price = data_collection[signal.symbol].get_value(
+                'close', -1)
+            current_date = data_collection[signal.symbol].get_value(
+                'date', -1)
             avialabe_qnty = (position_cash / current_price)
             if signal.signal_type is SignalType.LIQUIDATE:
                 position = self.positions.get_position(signal.symbol)
@@ -73,8 +75,10 @@ class Portfolio:
         Pass current price to open positions.
         '''
         for position in self.positions.active_positions:
-            position.current_price = current_data[position.signal.symbol].iloc[-1]['close']
-            position.time = current_data[position.signal.symbol].iloc[-1]['date']
+            position.current_price = current_data[position.signal.symbol].get_value(
+                'close', -1)
+            position.time = current_data[position.signal.symbol].get_value(
+                'date', -1)
 
     @ property
     def total_portfolio_value(self):

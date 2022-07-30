@@ -9,23 +9,44 @@ class History:
 
     def __init__(self, data) -> None:
         self.data = data.sort_index()
-        self.index = self.data.index
-        self.first_point = self.index[0]
-        self.last_point = self.index[-1]
 
     def get_all_available_data(self, current_timestamp) -> pd.DataFrame:
         '''
         Get all available data for History.
         '''
-        return self.data[self.index <= current_timestamp]
+        return self.data[self.data.index <= current_timestamp]
 
-# TODO create class for snapshots / wrap pandas table of each symbol in class to get properties like last_price, last_date.
+    @property
+    def size(self):
+        """
+        Size of history
+        """
+        return self.data.index[0]
+
+    def get_value(self, column: str, position=0):
+        """
+        Get value from history.
+        """
+        if column == 'timestamp_index':
+            return self.data.index[position]
+        return self.data.iloc[position][column]
+
+
+class HistorySnapshot(History):
+    """
+    Snapshot of available history.
+    """
+
+    def __init__(self, data) -> None:
+        super().__init__(data)
+        self.data = data
 
 
 class HistoryCollection:
     '''
     Collection of History objects.
     '''
+
     collection = {}
 
     @property
@@ -33,11 +54,12 @@ class HistoryCollection:
         '''
         Get lates value from colelction.
         '''
-        return max((history.last_point for history in self.collection.values()))
+        return max((history.get_value('timestamp_index', -1)
+                    for history in self.collection.values()))
 
-    def get_snapshot(self, current_timestamp: int) -> Dict[str, pd.DataFrame]:
+    def get_snapshots(self, current_timestamp: int) -> Dict[str, pd.DataFrame]:
         '''
         Get snapshot of history.
         '''
-        return {symbol: history.get_all_available_data(current_timestamp)
+        return {symbol: HistorySnapshot(history.get_all_available_data(current_timestamp))
                 for symbol, history in self.collection.items()}

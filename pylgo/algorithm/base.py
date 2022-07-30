@@ -100,7 +100,7 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         '''
         Check if collection is empty.
         '''
-        return all(item.empty for item in data.values())
+        return all(item.data.empty for item in data.values())
 
     def run(self):
         '''
@@ -111,12 +111,13 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         simulation = TimeSimulation(
             self.frequency, self.start, self.end, data.last_point)
         while not simulation.stop():
-            current_data = data.get_snapshot(simulation.current_time)
-            if not self.__is_empty(current_data):
+            snapshot = data.get_snapshots(simulation.current_time)
+            if not self.__is_empty(snapshot):
                 self.portfolio.manage(
-                    list(self.create_signals(current_data)), current_data)
+                    list(self.create_signals(snapshot)), snapshot)
             self.stats.stats['portfolio'].append(
-                {'timestamp': simulation.current_time, 'portfolio_value': self.portfolio.total_portfolio_value})
+                {'timestamp': simulation.current_time,
+                    'portfolio_value': self.portfolio.total_portfolio_value})
             simulation.update_current_timestamp()
 
     @abstractmethod

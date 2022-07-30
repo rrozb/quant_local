@@ -9,7 +9,8 @@ class BuyLiquidateAlgo(AlgorithmBase):
     algo_name = 'Buy Liquidate'
 
     def create_signals(self, current_data):
-        for symbol, symbol_data in current_data.items():
+        for symbol, snapshot in current_data.items():
+            symbol_data = snapshot.data
             if not symbol_data.empty:
                 if len(self.portfolio.positions.active_positions) == 0:
                     yield Signal(SignalType.BUY, symbol)
@@ -27,7 +28,8 @@ class SMAAlgo(AlgorithmBase):
 
     def create_signals(self, current_data):
         signals = []
-        for symbol, symbol_data in current_data.items():
+        for symbol, snapshot in current_data.items():
+            symbol_data = snapshot.data
             if len(symbol_data) < self.window_2:
                 continue
             sma_30 = symbol_data['close'].rolling(

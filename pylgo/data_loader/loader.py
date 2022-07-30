@@ -1,5 +1,5 @@
-import pandas as pd
 import datetime
+import pandas as pd
 from .data_model import History, HistoryCollection
 
 
