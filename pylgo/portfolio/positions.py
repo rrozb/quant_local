@@ -1,4 +1,4 @@
-import logging
+import pandas as pd
 from ..alpha import Signal, SignalType
 
 
@@ -36,7 +36,6 @@ class Positions:
     '''
     active_positions = []
     closed_positions = []
-    logger = logging.getLogger('portfolio testing')
 
     def get_position(self, symbol):
         '''
@@ -83,3 +82,21 @@ class Positions:
             return None
         return [position for position in self.active_positions
                 if position.signal.symbol == symbol][0]
+
+    def history_to_pandas(self) -> pd.DataFrame:
+        """
+        Tranform closed positions to pandas.
+        """
+        data = []
+        for position in self.closed_positions:
+            data.append({
+                'symbol': position.signal.symbol,
+                'time': position.time,
+                'start_price': position.start_price,
+                'last_price': position.current_price,
+                'quantity': position.quantity,
+                # it shows price*quantity not net profit
+                'position_value': position.current_value,
+                'position_type': position.signal.signal_type.name
+            })
+        return pd.DataFrame(data)

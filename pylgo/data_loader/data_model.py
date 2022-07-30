@@ -1,3 +1,4 @@
+from typing import Dict
 import pandas as pd
 
 
@@ -18,6 +19,8 @@ class History:
         '''
         return self.data[self.index <= current_timestamp]
 
+# TODO create class for snapshots / wrap pandas table of each symbol in class to get properties like last_price, last_date.
+
 
 class HistoryCollection:
     '''
@@ -26,13 +29,13 @@ class HistoryCollection:
     collection = {}
 
     @property
-    def last_point(self):
+    def last_point(self) -> int:
         '''
         Get lates value from colelction.
         '''
-        return max([history.last_point for history in self.collection.values()])
+        return max((history.last_point for history in self.collection.values()))
 
-    def get_snapshot(self, current_timestamp):
+    def get_snapshot(self, current_timestamp: int) -> Dict[str, pd.DataFrame]:
         '''
         Get snapshot of history.
         '''

@@ -15,14 +15,42 @@ logger_positions = logging.getLogger('postitins testing')
 logger_positions.setLevel(logging.DEBUG)
 
 
+class AlgoStats:
+    """
+    Algorithms stats.
+    """
+    # TODO refactor it
+
+    def __init__(self, reporting_path, base_file_name) -> None:
+        self.base_file_name = base_file_name
+        self.reporting_path = reporting_path
+        self.stats = {
+            'portfolio': []
+        }
+
+    def save_to_csv(self) -> None:
+        """
+        Save stats to csv.
+        """
+        pd.DataFrame(self.stats['portfolio']).to_csv(
+            f'{self.reporting_path}/metadata/{self.base_file_name}.csv')
+
+    def transform_data(self):
+        """
+        Transform data for saving.
+        """
+        raise NotImplementedError
+
+
 class AlgorithmLogging:
     '''
     Logging handler.
     '''
+    # FIXME refactor.
 
-    def __init__(self, algo_name, symbols, frequency, start, end, reporting_path):
-        self.reporting_path = f'{reporting_path}/{algo_name}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}.txt'
-        self.file_handler = logging.FileHandler(self.reporting_path)
+    def __init__(self, symbols, logs_path, base_file_name):
+        self.logs_path = f'{logs_path}/{base_file_name}.log'
+        self.file_handler = logging.FileHandler(self.logs_path)
         self.file_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -42,8 +70,9 @@ class AlgorithmBase(ABC, AlgorithmLogging):
     algo_name = None
 
     def __init__(self, symbols, prefix=None, frequency=None,
-                 start=None, end=None, reporting_path=None, cash=10_000) -> None:
-        super().__init__(self.algo_name, symbols, frequency, start, end, reporting_path)
+                 start=None, end=None, logs_path=None, reporting_path: str = None, cash=10_000) -> None:
+        self.base_file_name = f'{self.algo_name}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}'
+        super().__init__(symbols, logs_path, self.base_file_name)
         self.symbols = symbols
         self.start = start
         self.end = end
@@ -51,6 +80,7 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         self.prefix = prefix
         self.cash = cash
         self.portfolio = Portfolio(cash)
+        self.stats = AlgoStats(reporting_path, self.base_file_name)
 
     def __load_data(self):
         '''
@@ -77,6 +107,8 @@ class AlgorithmBase(ABC, AlgorithmLogging):
             if not self.__is_empty(current_data):
                 self.portfolio.manage(
                     list(self.create_signals(current_data)), current_data)
+            self.stats.stats['portfolio'].append(
+                {'timestamp': simulation.current_time, 'portfolio_value': self.portfolio.total_portfolio_value})
             simulation.update_current_timestamp()
 
     @abstractmethod
@@ -91,3 +123,7 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         logger.info('Total value: %s',
                     self.portfolio.total_portfolio_value)
         logger.info('Total return: %s', self.portfolio.portfolio_return)
+        self.stats.save_to_csv()
+        # TODO refactor
+        self.portfolio.positions.history_to_pandas().to_csv(
+            f'reports/metadata/{self.base_file_name}_positions.csv')
