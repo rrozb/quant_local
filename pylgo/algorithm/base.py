@@ -6,6 +6,7 @@ import pandas as pd
 from ..data_loader import Loader
 from ..portfolio import Portfolio
 from .time_simulation import TimeSimulation
+from ..plotting import CandleStickPlot
 
 logger = logging.getLogger('algorithm testing')
 logger.setLevel(logging.DEBUG)
@@ -27,19 +28,26 @@ class AlgoStats:
         self.stats = {
             'portfolio': []
         }
+        self.data = None
 
     def save_to_csv(self) -> None:
         """
         Save stats to csv.
         """
-        pd.DataFrame(self.stats['portfolio']).to_csv(
+        self.data.to_csv(
             f'{self.reporting_path}/metadata/{self.base_file_name}.csv')
 
-    def transform_data(self):
+    def transform_data(self) -> pd.DataFrame:
         """
         Transform data for saving.
         """
-        raise NotImplementedError
+        data = pd.DataFrame(self.stats['portfolio'])
+        data['date'] = pd.to_datetime(data['timestamp'], unit='ms')
+        data.set_index('date', inplace=True)
+        data = data['portfolio_value']
+        data = data.resample('D').ohlc(_method='ohlc')
+        self.data = data
+        return data
 
 
 class AlgorithmLogging:
@@ -123,7 +131,15 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         logger.info('Total value: %s',
                     self.portfolio.total_portfolio_value)
         logger.info('Total return: %s', self.portfolio.portfolio_return)
+        # FIXME
+        ####
+        data = self.stats.transform_data()
         self.stats.save_to_csv()
         # TODO refactor
         self.portfolio.positions.history_to_pandas().to_csv(
             f'reports/metadata/{self.base_file_name}_positions.csv')
+        ###
+        graph = CandleStickPlot()
+        data.reset_index(inplace=True)
+        graph.plot(data)
+        graph.fig.show()
