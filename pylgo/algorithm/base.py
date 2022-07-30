@@ -140,7 +140,8 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         self.portfolio.positions.history_to_pandas().to_csv(
             f'reports/metadata/{self.base_file_name}_positions.csv')
         ###
-        graph = CandleStickPlot()
+        graph = CandleStickPlot(algo_name=self.algo_name)
         data.reset_index(inplace=True)
+        data['date'] = data['date'].dt.strftime('%Y-%m-%d')
         graph.plot(data)
         graph.fig.show()
