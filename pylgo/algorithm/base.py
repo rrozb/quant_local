@@ -20,7 +20,6 @@ class AlgoStats:
     """
     Algorithms stats.
     """
-    # TODO refactor it
 
     def __init__(self, reporting_path, base_file_name) -> None:
         self.base_file_name = base_file_name
@@ -28,26 +27,51 @@ class AlgoStats:
         self.stats = {
             'portfolio': []
         }
-        self.data = None
+        self.portfolio_data = None
+        self.positions_report = None
 
-    def save_to_csv(self) -> None:
+    def __prepare_positions_report(self):
         """
-        Save stats to csv.
+        Prepare positions data for report.
         """
-        self.data.to_csv(
-            f'{self.reporting_path}/metadata/{self.base_file_name}.csv')
 
-    def transform_data(self) -> pd.DataFrame:
+        transactions_number = len(self.stats['positions'])
+
+        positions_report = f'''
+        Number of transactions: {transactions_number}
+        '''
+        return positions_report
+
+    def __prepare_portfolio_data(self):
         """
-        Transform data for saving.
+        Transform portfolio data into OHLC format.
         """
         data = pd.DataFrame(self.stats['portfolio'])
         data['date'] = pd.to_datetime(data['timestamp'], unit='ms')
         data.set_index('date', inplace=True)
-        data = data['portfolio_value']
-        data = data.resample('D').ohlc(_method='ohlc')
-        self.data = data
+        data = data['portfolio_value'].resample('D').ohlc(_method='ohlc')
+        # reset index to have date as normal column
+        data.reset_index(inplace=True)
         return data
+
+    def prepare_data(self):
+        """
+        Prepare reporting data
+        """
+        self.portfolio_data = self.__prepare_portfolio_data()
+        self.positions_report = self.__prepare_positions_report()
+
+    def save(self):
+        """
+        Save data and report locally.
+        """
+        self.portfolio_data.to_csv(
+            f'{self.reporting_path}/metadata/portfolio_{self.base_file_name}.csv')
+        self.stats['positions'].to_csv(
+            f'{self.reporting_path}/metadata/positions_{self.base_file_name}.csv')
+        with open(f'{self.reporting_path}/metadata/report_{self.base_file_name}.txt',
+                  'w+', encoding='UTF-8') as f:
+            f.write(self.positions_report)
 
 
 class AlgorithmLogging:
@@ -78,7 +102,8 @@ class AlgorithmBase(ABC, AlgorithmLogging):
     algo_name = None
 
     def __init__(self, symbols, prefix=None, frequency=None,
-                 start=None, end=None, logs_path=None, reporting_path: str = None, cash=10_000) -> None:
+                 start=None, end=None, logs_path=None,
+                 reporting_path: str = None, cash=10_000) -> None:
         self.base_file_name = f'{self.algo_name}_{frequency}_{start}_{end}_{int(datetime.now().timestamp())}'
         super().__init__(symbols, logs_path, self.base_file_name)
         self.symbols = symbols
@@ -88,6 +113,7 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         self.prefix = prefix
         self.cash = cash
         self.portfolio = Portfolio(cash)
+        # TODO rename it
         self.stats = AlgoStats(reporting_path, self.base_file_name)
 
     def __load_data(self):
@@ -119,6 +145,7 @@ class AlgorithmBase(ABC, AlgorithmLogging):
                 {'timestamp': simulation.current_time,
                     'portfolio_value': self.portfolio.total_portfolio_value})
             simulation.update_current_timestamp()
+        self.stats.stats['positions'] = self.portfolio.positions.history_to_pandas()
 
     @abstractmethod
     def create_signals(self, current_data: Dict[str, pd.DataFrame]) -> None:
@@ -132,16 +159,9 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         logger.info('Total value: %s',
                     self.portfolio.total_portfolio_value)
         logger.info('Total return: %s', self.portfolio.portfolio_return)
-        # FIXME
-        ####
-        data = self.stats.transform_data()
-        self.stats.save_to_csv()
-        # TODO refactor
-        self.portfolio.positions.history_to_pandas().to_csv(
-            f'reports/metadata/{self.base_file_name}_positions.csv')
-        ###
+
+        self.stats.prepare_data()
         graph = CandleStickPlot(algo_name=self.algo_name)
-        data.reset_index(inplace=True)
-        data['date'] = data['date'].dt.strftime('%Y-%m-%d')
-        graph.plot(data)
+        graph.plot(self.stats.portfolio_data)
         graph.fig.show()
+        self.stats.save()
