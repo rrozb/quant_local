@@ -1,4 +1,5 @@
 from datetime import datetime
+import pytz
 
 
 class TimeSimulation:
@@ -9,9 +10,9 @@ class TimeSimulation:
     def __init__(self, resolution, start, end, last_point) -> None:
         self.resolution = Resolution(resolution)
         self.start = int(datetime.strptime(
-            start, "%Y-%m-%d %H:%M:%S").timestamp()*1000)
+            start, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC).timestamp()*1000)
         self.end = int(datetime.strptime(
-            end, "%Y-%m-%d %H:%M:%S").timestamp()*1000)
+            end, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC).timestamp()*1000)
         self.current_time = self.start
         self.stop_reason = None
         self.last_point = last_point
