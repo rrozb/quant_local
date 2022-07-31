@@ -37,8 +37,7 @@ class AlgoStats:
 
         transactions_number = len(self.stats['positions'])
 
-        positions_report = f'''
-        Number of transactions: {transactions_number}
+        positions_report = f'''Number of transactions: {transactions_number}
         '''
         return positions_report
 
@@ -78,7 +77,6 @@ class AlgorithmLogging:
     '''
     Logging handler.
     '''
-    # FIXME refactor.
 
     def __init__(self, symbols, logs_path, base_file_name):
         self.logs_path = f'{logs_path}/{base_file_name}.log'

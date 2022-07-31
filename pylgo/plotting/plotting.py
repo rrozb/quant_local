@@ -8,9 +8,8 @@ class CandleStickPlot:
     """
 
     def __init__(self, indicator_columns=None, algo_name=None) -> None:
-        # TODO  shared_xaxes doesn't work on single plot - it shows nothing.
         self.fig = make_subplots(
-            rows=2, cols=1, shared_xaxes=True, row_heights=[0.8, 0.2])
+            rows=2, cols=1, row_heights=[0.8, 0.2])
         self.indicator_columns = indicator_columns
         self.algo_name = algo_name
 
@@ -30,7 +29,7 @@ class CandleStickPlot:
         self.fig.update_layout(
             title=self.algo_name,
             xaxis_title="date",
-            yaxis_title="Value",
+            yaxis_title="Portfolio value",
             xaxis_rangeslider_visible=False,
         )
         return self.fig
