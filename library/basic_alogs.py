@@ -1,5 +1,6 @@
 from ta.volatility import BollingerBands
 from ta.trend import MACD
+from ta.momentum import RSIIndicator, StochasticOscillator
 from pylgo.algorithm import AlgorithmBase
 from pylgo.alpha import Signal, SignalType
 
@@ -105,6 +106,50 @@ class BBAlgo(AlgorithmBase):
         return signals
 
 
+class RSIAlgo(AlgorithmBase):
+    '''
+    RSI Long/Short algorithm.
+    '''
+    algo_name = 'RSI'
+    window = 14
+    sell_cutoff = 75
+    buy_cutoff = 25
+    liquidate_cutoff = 50
+
+    def create_signals(self, current_data):
+        signals = []
+        for symbol, snapshot in current_data.items():
+            symbol_data = snapshot.data
+            if len(symbol_data) < self.window:
+                continue
+            indicator_bb = RSIIndicator(
+                close=symbol_data["close"], window=self.window)
+            symbol_data = symbol_data.copy()
+
+            symbol_data['rsi'] = indicator_bb.rsi()
+            symbol_position = self.portfolio.positions.get_symbol_position(
+                symbol)
+
+            is_buy = symbol_data['rsi'].iloc[-1] < self.buy_cutoff
+            is_sell = symbol_data['rsi'].iloc[-1] > self.sell_cutoff
+
+            if symbol_position is None and is_buy:
+                yield Signal(SignalType.BUY, symbol)
+            elif symbol_position is None and not is_sell:
+                yield Signal(SignalType.SELL, symbol)
+
+            if symbol_position is not None:
+                position_type = symbol_position.signal.signal_type
+                below_liquidate_cutoff = symbol_data['rsi'].iloc[-1] <= self.liquidate_cutoff
+                above_liquidate_cutoff = symbol_data['rsi'].iloc[-1] >= self.liquidate_cutoff
+                if position_type is SignalType.BUY and not above_liquidate_cutoff:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
+                elif position_type is SignalType.SELL and below_liquidate_cutoff:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
+
+        return signals
+
+
 class MACDAlgo(AlgorithmBase):
     '''
     MACDAlgo bandas Long/Short algorithm.
@@ -147,5 +192,55 @@ class MACDAlgo(AlgorithmBase):
                 elif position_type is SignalType.SELL and is_sell:
                     yield Signal(SignalType.LIQUIDATE, symbol)
                     yield Signal(SignalType.BUY, symbol)
+
+        return signals
+
+
+class StochasticAlgo(AlgorithmBase):
+    '''
+    Stochastic Long/Short algorithm.
+    '''
+    algo_name = 'Stochastic'
+    window = 14
+    smooth_window = 3
+    sell_cutoff = 85
+    buy_cutoff = 15
+    sell_liquidate_cutoff = 60
+    buy_liquidate_cutoff = 40
+
+    def create_signals(self, current_data):
+        signals = []
+        for symbol, snapshot in current_data.items():
+            symbol_data = snapshot.data
+            if len(symbol_data) < self.window:
+                continue
+            indicator_stochastic = StochasticOscillator(
+                close=symbol_data["close"],
+                high=symbol_data["high"],
+                low=symbol_data["low"],
+                window=self.window, smooth_window=3)
+            symbol_data = symbol_data.copy()
+
+            symbol_data['stoch'] = indicator_stochastic.stoch()
+            symbol_data['stoch_signal'] = indicator_stochastic.stoch_signal()
+            symbol_position = self.portfolio.positions.get_symbol_position(
+                symbol)
+
+            is_buy = symbol_data['stoch_signal'].iloc[-1] < self.buy_cutoff
+            is_sell = symbol_data['stoch_signal'].iloc[-1] > self.sell_cutoff
+
+            if symbol_position is None and is_buy:
+                yield Signal(SignalType.BUY, symbol)
+            elif symbol_position is None and not is_sell:
+                yield Signal(SignalType.SELL, symbol)
+
+            if symbol_position is not None:
+                position_type = symbol_position.signal.signal_type
+                below_liquidate_cutoff = symbol_data['stoch_signal'].iloc[-1] <= self.sell_liquidate_cutoff
+                above_liquidate_cutoff = symbol_data['stoch_signal'].iloc[-1] >= self.buy_liquidate_cutoff
+                if position_type is SignalType.BUY and not above_liquidate_cutoff:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
+                elif position_type is SignalType.SELL and below_liquidate_cutoff:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
 
         return signals
