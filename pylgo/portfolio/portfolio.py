@@ -19,6 +19,7 @@ class Portfolio:
         self.blocked_cash = 0
         self.stop_loss = stop_loss
         self.take_profit = take_profit
+        self.fees = 0.0
 
     def manage(self, signals: List[Signal], data_collection: pd.DataFrame):
         '''
@@ -53,13 +54,15 @@ class Portfolio:
         self.logger.info('Open position: %s', position)
         # buy
         if position.signal.signal_type is SignalType.BUY:
-            self.cash = self.cash - position.quantity*position.start_price
+            self.cash = self.cash - position.quantity * \
+                position.start_price*(1+self.fees)
         # Margin short
         else:
+            # TODO add interest rate and check if this fee is correct.
             margin_required = (
                 position.quantity*position.start_price)*self.initial_margin_requirement
-            self.blocked_cash += margin_required
-            self.cash = self.cash - margin_required
+            self.blocked_cash += margin_required*(1+self.fees)
+            self.cash = self.cash - margin_required*(1+self.fees)
             position.margin = margin_required
         self.positions.add_position(position)
 
@@ -71,10 +74,10 @@ class Portfolio:
         self.logger.info(f'Close position {stop_message}: %s', position)
         self.positions.remove_position(position)
         if position.signal.signal_type is SignalType.BUY:
-            self.cash = self.cash + position.current_value
+            self.cash = self.cash + position.current_value*(1-self.fees)
         elif position.signal.signal_type is SignalType.SELL:
             self.blocked_cash -= position.margin
-            self.cash += position.margin + position.current_value
+            self.cash += position.margin + position.current_value*(1-self.fees)
 
     def update_positions_data(self, current_data):
         '''
