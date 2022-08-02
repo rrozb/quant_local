@@ -10,19 +10,22 @@ class Portfolio:
     Portfolio managment. Opening and closing new positions based on provided signals.
     '''
 
-    def __init__(self, cash: int):
+    def __init__(self, cash: int, stop_loss: float = 0.05, take_profit: float = 0.05):
         self.strating_cash = cash
         self.cash = cash
         self.positions = Positions()
         self.logger = logging.getLogger('portfolio testing')
         self.initial_margin_requirement = 0.1
         self.blocked_cash = 0
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
 
     def manage(self, signals: List[Signal], data_collection: pd.DataFrame):
         '''
         Create or close positions.
         '''
         self.update_positions_data(data_collection)
+        self.validate_positions()
         number_buy_sell = sum((1 for signal in signals if signal.signal_type !=
                               0 or signal.signal_type != 2))
         target_pct = 1/number_buy_sell if number_buy_sell > 0 else 0
@@ -33,13 +36,15 @@ class Portfolio:
             current_date = data_collection[signal.symbol].get_value(
                 'date', -1)
             avialabe_qnty = (position_cash / current_price)
+            position_stop_loss = self.stop_loss if signal.stop_loss is None else signal.stop_loss
+            position_take_profit = self.take_profit if signal.take_profit is None else signal.take_profit
             if signal.signal_type is SignalType.LIQUIDATE:
                 position = self.positions.get_position(signal.symbol)
                 if position is not None:
                     self.close_position(position)
             else:
                 self.open_position(Position(
-                    signal, avialabe_qnty, current_price, current_date))
+                    signal, avialabe_qnty, current_price, current_date, position_stop_loss, position_take_profit))
 
     def open_position(self, position: Position):
         '''
@@ -58,11 +63,12 @@ class Portfolio:
             position.margin = margin_required
         self.positions.add_position(position)
 
-    def close_position(self, position):
+    def close_position(self, position, stop_hit=False):
         '''
         Close existing position.
         '''
-        self.logger.info('Close position: %s', position)
+        stop_message = ' stop loss was hit' if stop_hit else ''
+        self.logger.info(f'Close position {stop_message}: %s', position)
         self.positions.remove_position(position)
         if position.signal.signal_type is SignalType.BUY:
             self.cash = self.cash + position.current_value
@@ -79,6 +85,14 @@ class Portfolio:
                 'close', -1)
             position.time = current_data[position.signal.symbol].get_value(
                 'date', -1)
+
+    def validate_positions(self):
+        """
+        Validate positions.
+        """
+        for position in self.positions.active_positions:
+            if position.stop_loss_hit or position.take_profit_hit:
+                self.close_position(position, stop_hit=True)
 
     @ property
     def total_portfolio_value(self):

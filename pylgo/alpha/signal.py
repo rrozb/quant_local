@@ -16,12 +16,13 @@ class Signal:
     Signal for opening position.
     '''
 
-    def __init__(self, signal_type: SignalType, symbol: str, execute_at: datetime = None) -> None:
+    def __init__(self, signal_type: SignalType, symbol: str, execute_at: datetime = None, stop_loss=None, take_profit=None) -> None:
         self.signal_type = signal_type
         self.created_at = datetime.datetime.now()
         self.symbol = symbol
         self.execute_at = execute_at
-
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
     @property
     def sign(self):
         '''

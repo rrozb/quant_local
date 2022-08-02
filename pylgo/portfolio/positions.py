@@ -7,18 +7,48 @@ class Position:
     Active position.
     '''
 
-    def __init__(self, signal: Signal, quantity, start_price, time):
+    def __init__(self, signal: Signal, quantity, start_price, time, stop_loss, take_profit):
         self.signal = signal
         self.quantity = quantity
         self.start_price = start_price
         self.current_price = start_price
         self.time = time
         self.margin = 0
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
 
     def __str__(self) -> str:
         return f'{self.time} {self.signal.symbol}.' \
             + f'{self.signal.name} {self.signal.sign}' \
             + f'{self.quantity} for a price {self.current_price}'
+
+    @property
+    def stop_loss_hit(self):
+        """
+        Is stop loss hit.
+        """
+        if self.stop_loss is None:
+            return False
+        if self.signal.signal_type is SignalType.SELL:
+            return ((self.start_price * self.quantity) -
+                    (self.quantity * self.current_price)) \
+                / ((self.start_price * self.quantity)) < -self.stop_loss
+        return (self.quantity * self.current_price - self.quantity * self.start_price) \
+            / (self.quantity * self.start_price) < -self.stop_loss
+
+    @property
+    def take_profit_hit(self):
+        """
+        Is stop loss hit.
+        """
+        if self.stop_loss is None:
+            return False
+        if self.signal.signal_type is SignalType.SELL:
+            return ((self.start_price * self.quantity) -
+                    (self.quantity * self.current_price)) \
+                / ((self.start_price * self.quantity)) > self.take_profit
+        return (self.quantity * self.current_price - self.quantity * self.start_price) \
+            / (self.quantity * self.start_price) > self.take_profit
 
     @property
     def current_value(self):
