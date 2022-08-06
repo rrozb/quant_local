@@ -10,7 +10,7 @@ class Portfolio:
     Portfolio managment. Opening and closing new positions based on provided signals.
     '''
 
-    def __init__(self, cash: int, stop_loss: float = 0.05, take_profit: float = 0.05):
+    def __init__(self, cash: int, stop_loss: float = None, take_profit: float = None):
         self.strating_cash = cash
         self.cash = cash
         self.positions = Positions()
@@ -71,7 +71,8 @@ class Portfolio:
         Close existing position.
         '''
         stop_message = ' stop loss was hit' if stop_hit else ''
-        self.logger.info(f'Close position {stop_message}: %s', position)
+        self.logger.info(
+            f'Close position {stop_message}: %s, net profit {position.profit}', position)
         self.positions.remove_position(position)
         if position.signal.signal_type is SignalType.BUY:
             self.cash = self.cash + position.current_value*(1-self.fees)

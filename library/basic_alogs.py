@@ -1,4 +1,5 @@
 from ta.volatility import BollingerBands
+from prophet import Prophet
 from ta.trend import MACD
 from ta.momentum import RSIIndicator, StochasticOscillator
 from pylgo.algorithm import AlgorithmBase
@@ -243,4 +244,50 @@ class StochasticAlgo(AlgorithmBase):
                 elif position_type is SignalType.SELL and below_liquidate_cutoff:
                     yield Signal(SignalType.LIQUIDATE, symbol)
 
+        return signals
+
+
+class ProphetTrendAlgo(AlgorithmBase):
+    '''
+    Prophet Trend following Long/Short algorithm.
+    '''
+    algo_name = 'ProphetTrend'
+    window = 168
+
+    def create_signals(self, current_data):
+        signals = []
+        for symbol, snapshot in current_data.items():
+            symbol_data = snapshot.data
+            if len(symbol_data) < self.window:
+                continue
+            symbol_data['ds'] = symbol_data['date']
+            symbol_data['y'] = symbol_data['close']
+            data = symbol_data[['ds', 'y']].tail(self.window).copy()
+            last_value = data.iloc[-1, 1]
+            model = Prophet().fit(data)
+
+            future = model.make_future_dataframe(periods=1, freq='H')
+            fitted = model.predict(future)
+            # FIXME: use forecasts too
+            fcst = fitted.iloc[-1]
+            last_fitted = fitted.iloc[-2]
+            trend = last_fitted.trend
+
+            is_buy = trend < last_value
+            is_sell = trend > last_value
+
+            symbol_position = self.portfolio.positions.get_symbol_position(
+                symbol)
+            if symbol_position is None and is_buy:
+                yield Signal(SignalType.BUY, symbol)
+            elif symbol_position is None and not is_sell:
+                yield Signal(SignalType.SELL, symbol)
+            if symbol_position is not None:
+                position_type = symbol_position.signal.signal_type
+                if position_type is SignalType.BUY and is_sell:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
+                    yield Signal(SignalType.SELL, symbol)
+                elif position_type is SignalType.SELL and is_buy:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
+                    yield Signal(SignalType.BUY, symbol)
         return signals

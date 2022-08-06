@@ -41,6 +41,7 @@ class Position:
         """
         Is stop loss hit.
         """
+        # FIXME use profit property
         if self.stop_loss is None:
             return False
         if self.signal.signal_type is SignalType.SELL:
@@ -58,6 +59,18 @@ class Position:
         if self.signal.signal_type is SignalType.SELL:
             return (self.start_price * self.quantity) - (self.quantity * self.current_price)
         return self.quantity * self.current_price
+
+    @property
+    def profit(self):
+        '''
+        Current % position profit.
+        '''
+        if self.signal.signal_type is SignalType.SELL:
+            return ((self.start_price * self.quantity) -
+                    (self.quantity * self.current_price)) \
+                / ((self.start_price * self.quantity))
+        return (self.quantity * self.current_price - self.quantity * self.start_price) \
+            / (self.quantity * self.start_price)
 
 
 class Positions:
