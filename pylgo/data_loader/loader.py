@@ -36,3 +36,35 @@ class Loader:
         # FIXME add specific exceptions
         except Exception as e:
             raise Exception(e)
+
+class BitfinexLoaderAPILoader():
+    def __init__(self, symbol, start_date, end_date,  **kwargs):
+        self.baseUrl = "https://api-pub.bitfinex.com/v2/candles/trade:1m:"
+        self.symbol = symbol
+        self.start_date = datetime.strptime(
+            start_date, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC)
+        self.end_date = datetime.strptime(
+            end_date, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC)
+        self.timestep = 10000 * 60000
+        self.start_date_unix = self.start_date.timestamp() * 1000
+        self.end_date_unix = self.end_date.timestamp() * 1000      
+
+    def get_data(self):
+        current_time = self.start_date_unix
+        while current_time < self.end_date_unix:
+            if self.end_date_unix - current_time > self.timestep:
+                self.send_request(start=current_time, end=current_time+self.timestep)
+                current_time += self.timestep
+            else:
+                self.send_request(start=current_time, end=self.end_date_unix)
+                current_time = (self.end_date_unix - current_time) + current_time
+
+    def send_request(self, start, end):
+        r = requests.get(f'{self.baseUrl}{self.symbol}/hist?start={start}&end={end}&limit=10000')
+        if r.status_code == 200:
+            for candle in r.json():
+                CandlesRepo.create(candles=candle, symbol=self.symbol)           
+        if r.status_code == 429:
+            print('You have reached ratelimit. Waiting 1 minute...')
+            time.sleep(60)
+            r = requests.get(f'{self.baseUrl}{self.symbol}/hist?start={start}&end={end}&limit=10000')
