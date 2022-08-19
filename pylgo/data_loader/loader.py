@@ -1,7 +1,13 @@
 import datetime
-import pandas as pd
-from .data_model import History, HistoryCollection
 
+from engine.db import CandlesRepo
+#import pandas as pd
+
+from .data_model import History, HistoryCollection
+import requests
+import pytz
+import time
+from datetime import datetime
 
 class Loader:
     '''
@@ -37,8 +43,27 @@ class Loader:
         except Exception as e:
             raise Exception(e)
 
-class BitfinexLoaderAPILoader():
-    def __init__(self, symbol, start_date, end_date,  **kwargs):
+#TODO Add timeframe to BitFInexLoaderAPI
+TIMEFRAME = {
+    "1m":"60000",
+    "5m": "300000",
+    '15m': "900000",
+    '30m': '1800000',
+    '1h': '3600000',
+    '3h': '10800000',
+    '6h': '21600000',
+    '12h': '43200000',
+    '1D': '86400000',
+    '1W': '604800000',
+    '14D': '1209600000',
+    '1M': '2592000000'
+
+}
+class BitfinexLoaderAPI():
+    """
+    Class to work with Bitfinex API
+    """
+    def __init__(self, symbol: str, start_date: datetime, end_date: datetime, timeframe: str = None, **kwargs) -> None:
         self.baseUrl = "https://api-pub.bitfinex.com/v2/candles/trade:1m:"
         self.symbol = symbol
         self.start_date = datetime.strptime(
@@ -49,7 +74,10 @@ class BitfinexLoaderAPILoader():
         self.start_date_unix = self.start_date.timestamp() * 1000
         self.end_date_unix = self.end_date.timestamp() * 1000      
 
-    def get_data(self):
+    def get_data(self) -> None:
+        """
+        Get current date
+        """
         current_time = self.start_date_unix
         while current_time < self.end_date_unix:
             if self.end_date_unix - current_time > self.timestep:
@@ -59,7 +87,10 @@ class BitfinexLoaderAPILoader():
                 self.send_request(start=current_time, end=self.end_date_unix)
                 current_time = (self.end_date_unix - current_time) + current_time
 
-    def send_request(self, start, end):
+    def send_request(self, start: int, end: int) -> None:
+        """
+        Send request to Bitfinex API with current date
+        """
         r = requests.get(f'{self.baseUrl}{self.symbol}/hist?start={start}&end={end}&limit=10000')
         if r.status_code == 200:
             for candle in r.json():
@@ -68,3 +99,5 @@ class BitfinexLoaderAPILoader():
             print('You have reached ratelimit. Waiting 1 minute...')
             time.sleep(60)
             r = requests.get(f'{self.baseUrl}{self.symbol}/hist?start={start}&end={end}&limit=10000')
+
+

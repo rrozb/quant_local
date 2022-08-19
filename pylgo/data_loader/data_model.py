@@ -63,4 +63,3 @@ class HistoryCollection:
         '''
         return {symbol: HistorySnapshot(history.get_all_available_data(current_timestamp))
                 for symbol, history in self.collection.items()}
-
