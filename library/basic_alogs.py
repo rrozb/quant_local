@@ -326,7 +326,7 @@ class LSTMAlgo(AlgorithmBase):
                 test_predict_scaled = self.model.predict(X)
                 symbol_position = self.portfolio.positions.get_symbol_position(
                     symbol)
-                is_buy = test_predict_scaled[0][0] < last_value
+                is_buy = test_predict_scaled[0][0] > last_value
                 is_sell = not is_buy
                 if symbol_position is not None:
                     yield Signal(SignalType.LIQUIDATE, symbol)
