@@ -1,5 +1,10 @@
+from curses import window
 from ta.volatility import BollingerBands
 from prophet import Prophet
+import joblib
+import numpy as np
+import pandas as pd
+from keras.models import load_model
 from ta.trend import MACD
 from ta.momentum import RSIIndicator, StochasticOscillator
 from pylgo.algorithm import AlgorithmBase
@@ -290,4 +295,43 @@ class ProphetTrendAlgo(AlgorithmBase):
                 elif position_type is SignalType.SELL and is_buy:
                     yield Signal(SignalType.LIQUIDATE, symbol)
                     yield Signal(SignalType.BUY, symbol)
+        return signals
+
+
+class LSTMAlgo(AlgorithmBase):
+    '''
+    LSTM Long/Short regression algorithm.
+    '''
+    algo_name = 'LSTMAlgo'
+    scaler = joblib.load(
+        '/home/rr/Documents/Coding/quant_local/notebooks/scaler.pickle')
+    model = load_model(
+        '/home/rr/Documents/Coding/quant_local/notebooks/results/univariate_time_series/rnn.h5')
+    window = 63
+
+    def create_signals(self, current_data):
+        signals = []
+        for symbol, snapshot in current_data.items():
+            symbol_data = snapshot.data
+            if len(symbol_data) >= self.window:
+                symbol_data = symbol_data[['date', 'close']]
+                symbol_data.set_index('date', inplace=True)
+                symbol_data.sort_index(inplace=True)
+                symbol_data = pd.Series(self.scaler.transform(symbol_data).squeeze(),
+                                        index=symbol_data.index)
+
+                X = symbol_data.to_numpy()[-self.window:]
+                last_value = X[-1]
+                X = X.reshape(63, 1)
+                test_predict_scaled = self.model.predict(X)
+                symbol_position = self.portfolio.positions.get_symbol_position(
+                    symbol)
+                is_buy = test_predict_scaled[0][0] < last_value
+                is_sell = not is_buy
+                if symbol_position is not None:
+                    yield Signal(SignalType.LIQUIDATE, symbol)
+                if is_buy:
+                    yield Signal(SignalType.BUY, symbol)
+                elif is_sell:
+                    yield Signal(SignalType.SELL, symbol)
         return signals

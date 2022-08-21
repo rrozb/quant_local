@@ -47,7 +47,7 @@ class Resolution:
     minute = 60*1000
 
     def __init__(self, resolution):
-        if resolution == 'day':
+        if resolution == 'd':
             self.step = self.day
         elif resolution == '1h':
             self.step = self.hour

@@ -144,14 +144,6 @@ class AlgorithmBase(ABC, AlgorithmLogging):
                     'portfolio_value': self.portfolio.total_portfolio_value})
             simulation.update_current_timestamp()
         self.stats.stats['positions'] = self.portfolio.positions.history_to_pandas()
-
-    @abstractmethod
-    def create_signals(self, current_data: Dict[str, pd.DataFrame]) -> None:
-        '''
-        Create signals that will be used to create trade orders.
-        '''
-
-    def __del__(self):
         logger.info('Algorithm finished %s.', self.algo_name)
         logger.info('Total cash: %s', self.portfolio.cash)
         logger.info('Total value: %s',
@@ -163,3 +155,23 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         graph.plot(self.stats.portfolio_data)
         graph.fig.show()
         self.stats.save()
+
+    @abstractmethod
+    def create_signals(self, current_data: Dict[str, pd.DataFrame]) -> None:
+        '''
+        Create signals that will be used to create trade orders.
+        '''
+
+    # def __del__(self):
+    #     print('here')
+    #     logger.info('Algorithm finished %s.', self.algo_name)
+    #     logger.info('Total cash: %s', self.portfolio.cash)
+    #     logger.info('Total value: %s',
+    #                 self.portfolio.total_portfolio_value)
+    #     logger.info('Total return: %s', self.portfolio.portfolio_return)
+
+    #     self.stats.prepare_data()
+    #     graph = CandleStickPlot(algo_name=self.algo_name)
+    #     graph.plot(self.stats.portfolio_data)
+    #     graph.fig.show()
+    #     self.stats.save()
