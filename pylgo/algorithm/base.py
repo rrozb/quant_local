@@ -126,10 +126,17 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         '''
         return all(item.data.empty for item in data.values())
 
+    def pre_run(self):
+        """
+        Function to be called before run.
+        """
+        return
+
     def run(self):
         '''
         Run loop to iterate through history and simulate trades.
         '''
+        self.pre_run()
         data = self.__load_data()
 
         simulation = TimeSimulation(
@@ -155,23 +162,26 @@ class AlgorithmBase(ABC, AlgorithmLogging):
         graph.plot(self.stats.portfolio_data)
         graph.fig.show()
         self.stats.save()
+        self.close()
+
+    def close(self):
+        """
+        After algorithm was run.
+        """
+        logger.info('Algorithm finished %s.', self.algo_name)
+        logger.info('Total cash: %s', self.portfolio.cash)
+        logger.info('Total value: %s',
+                    self.portfolio.total_portfolio_value)
+        logger.info('Total return: %s', self.portfolio.portfolio_return)
+
+        self.stats.prepare_data()
+        graph = CandleStickPlot(algo_name=self.algo_name)
+        graph.plot(self.stats.portfolio_data)
+        graph.fig.show()
+        self.stats.save()
 
     @abstractmethod
     def create_signals(self, current_data: Dict[str, pd.DataFrame]) -> None:
         '''
         Create signals that will be used to create trade orders.
         '''
-
-    # def __del__(self):
-    #     print('here')
-    #     logger.info('Algorithm finished %s.', self.algo_name)
-    #     logger.info('Total cash: %s', self.portfolio.cash)
-    #     logger.info('Total value: %s',
-    #                 self.portfolio.total_portfolio_value)
-    #     logger.info('Total return: %s', self.portfolio.portfolio_return)
-
-    #     self.stats.prepare_data()
-    #     graph = CandleStickPlot(algo_name=self.algo_name)
-    #     graph.plot(self.stats.portfolio_data)
-    #     graph.fig.show()
-    #     self.stats.save()

@@ -303,11 +303,17 @@ class LSTMAlgo(AlgorithmBase):
     LSTM Long/Short regression algorithm.
     '''
     algo_name = 'LSTMAlgo'
-    scaler = joblib.load(
-        '/home/rr/Documents/Coding/quant_local/notebooks/scaler.pickle')
-    model = load_model(
-        '/home/rr/Documents/Coding/quant_local/notebooks/results/univariate_time_series/rnn.h5')
+    scaler_path = '/home/rr/Documents/Coding/quant_local/notebooks/scaler.pickle'
+    model_path = '/home/rr/Documents/Coding/quant_local/notebooks/results/univariate_time_series/rnn.h5'
+    model = None
+    scaler = None
     window = 63
+
+    def pre_run(self):
+        self.scaler = joblib.load(
+            self.scaler_path)
+        self.model = load_model(
+            self.model_path)
 
     def create_signals(self, current_data):
         signals = []

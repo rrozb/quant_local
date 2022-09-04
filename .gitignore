@@ -133,3 +133,4 @@ datasets/*
 notebooks/*
 pylgo/data/*
 reports/*
+*.db
